@@ -41,6 +41,7 @@ export default function SchoolManagementPage() {
   const [formCode, setFormCode] = useState("");
   const [formName, setFormName] = useState("");
   const [formWebsite, setFormWebsite] = useState("");
+  const [formEduSystemUrl, setFormEduSystemUrl] = useState("");
   const [formFeatures, setFormFeatures] = useState<Feature[]>([]);
   const [formEnabled, setFormEnabled] = useState(true);
   const [formWeekStartDay, setFormWeekStartDay] = useState(0);
@@ -77,6 +78,7 @@ export default function SchoolManagementPage() {
     setFormCode("");
     setFormName("");
     setFormWebsite("");
+    setFormEduSystemUrl("");
     setFormFeatures([]);
     setFormEnabled(true);
     setFormWeekStartDay(0);
@@ -88,6 +90,7 @@ export default function SchoolManagementPage() {
     setFormCode(school.code);
     setFormName(school.name);
     setFormWebsite(school.website);
+    setFormEduSystemUrl(school.edu_system_url ?? "");
     setFormFeatures(school.features ?? []);
     setFormEnabled(school.enabled);
     setFormWeekStartDay(school.week_start_day ?? 0);
@@ -108,6 +111,7 @@ export default function SchoolManagementPage() {
         const updated = await updateSchool(editing.code, {
           name: formName.trim(),
           website: formWebsite.trim(),
+          edu_system_url: formEduSystemUrl.trim(),
           features: formFeatures,
           enabled: formEnabled,
           week_start_day: formWeekStartDay,
@@ -119,6 +123,7 @@ export default function SchoolManagementPage() {
           code: formCode.trim(),
           name: formName.trim(),
           website: formWebsite.trim(),
+          edu_system_url: formEduSystemUrl.trim(),
           features: formFeatures,
           week_start_day: formWeekStartDay,
         });
@@ -164,6 +169,24 @@ export default function SchoolManagementPage() {
           {getValue() as string}
         </a>
       ),
+    },
+    {
+      accessorKey: "edu_system_url",
+      header: "教务系统",
+      cell: ({ getValue }) => {
+        const url = (getValue() as string) ?? "";
+        if (!url) return <span className="text-muted-foreground text-sm">—</span>;
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline-offset-4 hover:underline text-sm truncate max-w-45 block"
+          >
+            {url}
+          </a>
+        );
+      },
     },
     {
       accessorKey: "features",
@@ -296,6 +319,19 @@ export default function SchoolManagementPage() {
                 className="rounded-xl"
                 type="url"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label>教务系统地址</Label>
+              <Input
+                value={formEduSystemUrl}
+                onChange={(e) => setFormEduSystemUrl(e.target.value)}
+                placeholder="https://jwc.example.edu.cn"
+                className="rounded-xl"
+                type="url"
+              />
+              <p className="text-xs text-muted-foreground">
+                学生登录教务系统的地址，可留空。留空时客户端回退到官方网站。
+              </p>
             </div>
             <div className="space-y-2">
               <Label>功能模块</Label>

@@ -6,6 +6,8 @@ export interface CreateSchoolData {
   code: string;
   name: string;
   website: string;
+  /** 可为空串；留空则客户端回退到 website。 */
+  edu_system_url: string;
   features: Feature[];
   week_start_day: number;
 }
@@ -13,6 +15,7 @@ export interface CreateSchoolData {
 export interface UpdateSchoolData {
   name?: string;
   website?: string;
+  edu_system_url?: string;
   features?: Feature[];
   enabled?: boolean;
   week_start_day?: number;

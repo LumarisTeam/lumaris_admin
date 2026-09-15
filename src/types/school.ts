@@ -44,6 +44,8 @@ export interface School {
   code: string;
   name: string;
   website: string;
+  /** 学生登录教务系统的地址；为空时客户端回退到 website。 */
+  edu_system_url: string;
   features: Feature[];
   enabled: boolean;
   week_start_day: number;
