@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { MapPoiModel } from "@/types/map";
+import { gcj02ToWgs84 } from "@/lib/coords";
 
 // Fix Leaflet default marker icon paths in bundlers
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -16,20 +17,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-function MapBoundsUpdater({ pois }: { pois: MapPoiModel[] }) {
+interface DisplayPoint {
+  poi: MapPoiModel;
+  /** 渲染用坐标：已反解成 WGS-84，与 OSM 底图一致 */
+  position: L.LatLngTuple;
+}
+
+function MapBoundsUpdater({ points }: { points: DisplayPoint[] }) {
   const map = useMap();
 
   useEffect(() => {
-    if (pois.length === 0) return;
-    const valid = pois.filter((p) => p.latitude && p.longitude);
-    if (valid.length === 0) return;
-    const bounds = L.latLngBounds(
-      valid.map((p) => [p.latitude, p.longitude] as L.LatLngTuple),
-    );
+    if (points.length === 0) return;
+    const bounds = L.latLngBounds(points.map((p) => p.position));
     if (bounds.isValid()) {
       map.fitBounds(bounds, { padding: [40, 40] });
     }
-  }, [pois, map]);
+  }, [points, map]);
 
   return null;
 }
@@ -41,7 +44,20 @@ interface MapViewProps {
 }
 
 export function MapView({ pois, onMarkerClick, className }: MapViewProps) {
-  const defaultCenter: L.LatLngTuple = [34.23, 108.96]; // Xi'an area
+  const defaultCenter: L.LatLngTuple = [34.0159, 108.7505]; // 草堂校区
+
+  // 库中存的是 GCJ-02（与 App 的高德底图同源），OSM 底图是 WGS-84，
+  // 直接叠加会整体向东南偏约 500m，所以只在渲染时反解，存储值不动。
+  const points = useMemo<DisplayPoint[]>(
+    () =>
+      pois
+        .filter((p) => p.latitude && p.longitude)
+        .map((poi) => ({
+          poi,
+          position: gcj02ToWgs84(poi.latitude, poi.longitude),
+        })),
+    [pois],
+  );
 
   return (
     <div className={className}>
@@ -55,33 +71,29 @@ export function MapView({ pois, onMarkerClick, className }: MapViewProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <MapBoundsUpdater pois={pois} />
-        {pois
-          .filter((p) => p.latitude && p.longitude)
-          .map((poi) => (
-            <Marker
-              key={poi.id ?? `${poi.latitude}-${poi.longitude}`}
-              position={[poi.latitude, poi.longitude]}
-              eventHandlers={{
-                click: () => onMarkerClick?.(poi),
-              }}
-            >
-              <Popup>
-                <div className="min-w-[160px]">
-                  <h3 className="font-semibold text-sm">{poi.name}</h3>
-                  {poi.category && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{poi.category}</p>
-                  )}
-                  {poi.address && (
-                    <p className="text-xs mt-1">{poi.address}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {poi.latitude.toFixed(6)}, {poi.longitude.toFixed(6)}
-                  </p>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+        <MapBoundsUpdater points={points} />
+        {points.map(({ poi, position }) => (
+          <Marker
+            key={poi.id ?? `${poi.latitude}-${poi.longitude}`}
+            position={position}
+            eventHandlers={{
+              click: () => onMarkerClick?.(poi),
+            }}
+          >
+            <Popup>
+              <div className="min-w-[160px]">
+                <h3 className="font-semibold text-sm">{poi.name}</h3>
+                {poi.category && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{poi.category}</p>
+                )}
+                {poi.address && <p className="text-xs mt-1">{poi.address}</p>}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {poi.latitude.toFixed(6)}, {poi.longitude.toFixed(6)}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
