@@ -46,9 +46,9 @@ function AdminHeader() {
 
 export function AdminLayout() {
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden lg:flex-row">
       <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AdminHeader />
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">
           <Outlet />

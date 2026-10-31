@@ -1,5 +1,4 @@
 import xauatRequest from "./xauat-request";
-import flaskRequest from "./flask-request";
 import type { LogEntry, LogPage, LogLevel } from "@/types/log";
 
 interface BackendLogPage {
@@ -32,10 +31,5 @@ function normalize(data: BackendLogPage): LogPage {
 
 export async function getEduApiLogs(query: LogQuery): Promise<LogPage> {
   const response = await xauatRequest.get<BackendLogPage>("/Logs", { params: query });
-  return normalize(response.data);
-}
-
-export async function getFlaskLogs(query: LogQuery): Promise<LogPage> {
-  const response = await flaskRequest.get<BackendLogPage>("/Logs", { params: query });
   return normalize(response.data);
 }
